@@ -150,6 +150,12 @@ export default async function AdminOverviewPage() {
                     </div>
                 </CardContent>
             </Card>
+            <div className="mt-8 pt-8 border-t border-dark-800">
+                <h3 className="text-lg font-semibold text-dark-50 mb-4">
+                    Quản trị hệ thống
+                </h3>
+                <SeedButton />
+            </div>
         </div>
     );
 }
