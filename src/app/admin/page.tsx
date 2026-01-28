@@ -24,9 +24,7 @@ export default async function AdminOverviewPage() {
         redirect('/dang-nhap');
     }
 
-    if (currentUser.role !== 'ADMIN') {
-        redirect('/tai-khoan');
-    }
+    // Role check is handled in layout.tsx
 
     // Get statistics
     const [users, orders, webapps] = await Promise.all([

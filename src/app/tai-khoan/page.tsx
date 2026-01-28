@@ -6,6 +6,7 @@ import { Card, CardContent, Badge } from '@/components/ui';
 import {
     COLLECTIONS,
     getDocById,
+    getDocByField,
     getAllDocs,
     where,
     orderBy,
@@ -29,14 +30,24 @@ export default async function UserDashboardPage() {
         redirect('/dang-nhap');
     }
 
-    // Get user data
-    const user = await getDocById<User>(COLLECTIONS.USERS, currentUser.userId);
+    // For hardcoded admin, redirect to admin dashboard
+    if (currentUser.userId === 'hardcoded-admin-id') {
+        redirect('/admin');
+    }
+
+    // Get user data from Firestore
+    let user = await getDocById<User>(COLLECTIONS.USERS, currentUser.userId);
+
+    // If not found by ID, try by email (for Firebase Auth users)
+    if (!user) {
+        user = await getDocByField<User>(COLLECTIONS.USERS, 'email', currentUser.email);
+    }
 
     // Get user's permissions (webapps)
     const permissions = await getAllDocs<UserWebappPermission>(
         COLLECTIONS.USER_WEBAPP_PERMISSIONS,
         [
-            where('userId', '==', currentUser.userId),
+            where('userId', '==', user?.id || currentUser.userId),
             where('status', '==', 'ACTIVE'),
         ]
     );
