@@ -14,6 +14,28 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // HARDCODED ADMIN (Temporary)
+        // Bypass DB check for this specific email/password
+        if (email === 'admin@anvitech.vn' && password === 'Admin123@') {
+            const token = createToken({
+                userId: 'hardcoded-admin-id',
+                email: 'admin@anvitech.vn',
+                role: 'ADMIN',
+            });
+
+            const response = NextResponse.json({
+                message: 'Đăng nhập thành công (Admin)',
+                user: {
+                    id: 'hardcoded-admin-id',
+                    email: 'admin@anvitech.vn',
+                    role: 'ADMIN',
+                },
+            });
+
+            response.headers.set('Set-Cookie', setAuthCookie(token));
+            return response;
+        }
+
         // Find user
         const user = await getDocByField<User>(COLLECTIONS.USERS, 'email', email);
 
