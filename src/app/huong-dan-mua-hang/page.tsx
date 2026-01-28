@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Header, Footer } from '@/components/layout';
-import { Card, CardContent } from '@/components/ui';
+import { Card, CardContent, Badge } from '@/components/ui';
 
 export const metadata: Metadata = {
     title: 'Hướng dẫn mua hàng',
