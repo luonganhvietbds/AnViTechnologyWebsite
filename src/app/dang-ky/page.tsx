@@ -59,22 +59,51 @@ export default function RegisterPage() {
                 <main className="min-h-screen pt-20 flex items-center justify-center">
                     <div className="container-custom py-12">
                         <div className="max-w-md mx-auto text-center">
-                            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-accent-green/20 flex items-center justify-center">
-                                <svg className="w-10 h-10 text-accent-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary-500/20 flex items-center justify-center">
+                                <svg className="w-10 h-10 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                             </div>
                             <h1 className="text-2xl font-bold text-dark-50 mb-4">
-                                Đăng ký thành công!
+                                Kiểm tra email của bạn!
                             </h1>
-                            <p className="text-dark-400 mb-6">
-                                Tài khoản của bạn đã được tạo. Bạn có thể đăng nhập ngay bây giờ.
+                            <p className="text-dark-400 mb-2">
+                                Chúng tôi đã gửi email xác thực đến:
                             </p>
-                            <Link href="/dang-nhap">
-                                <Button variant="primary">
-                                    Đăng nhập ngay
-                                </Button>
-                            </Link>
+                            <p className="text-primary-400 font-medium mb-6">
+                                {email}
+                            </p>
+                            <p className="text-dark-500 text-sm mb-6">
+                                Vui lòng nhấn vào link trong email để kích hoạt tài khoản.
+                                Sau đó bạn có thể đăng nhập.
+                            </p>
+                            <div className="space-y-3">
+                                <Link href="/dang-nhap">
+                                    <Button variant="primary" className="w-full">
+                                        Đi đến trang đăng nhập
+                                    </Button>
+                                </Link>
+                                <p className="text-dark-500 text-sm">
+                                    Không nhận được email?{' '}
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await fetch('/api/auth/resend-verification', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ email, password }),
+                                                });
+                                                alert('Email xác thực đã được gửi lại!');
+                                            } catch {
+                                                alert('Có lỗi xảy ra');
+                                            }
+                                        }}
+                                        className="text-primary-400 hover:text-primary-300"
+                                    >
+                                        Gửi lại
+                                    </button>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </main>

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hashPassword, createToken, setAuthCookie } from '@/lib/auth';
 import {
-    COLLECTIONS,
-    getDocByField,
-    createDoc,
-    User
-} from '@/lib/db';
+    createUserWithEmailAndPassword,
+    sendEmailVerification,
+    AuthError
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { createToken, setAuthCookie } from '@/lib/auth';
+import { COLLECTIONS, createDoc, getDocByField, User } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -26,9 +27,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check if user already exists
+        // Check if user already exists in Firestore
         const existingUser = await getDocByField<User>(COLLECTIONS.USERS, 'email', email);
-
         if (existingUser) {
             return NextResponse.json(
                 { error: 'Email đã được sử dụng' },
@@ -36,13 +36,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Hash password and create user
-        const passwordHash = await hashPassword(password);
+        // Create user with Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+
+        // Send email verification
+        await sendEmailVerification(firebaseUser);
+
+        // Also create user record in Firestore for our app data
         const userId = await createDoc(COLLECTIONS.USERS, {
             email,
-            passwordHash,
+            firebaseUid: firebaseUser.uid,
+            passwordHash: '', // Not needed with Firebase Auth
             status: 'ACTIVE',
             role: 'USER',
+            emailVerified: false,
         });
 
         // Create token and set cookie
@@ -54,12 +62,14 @@ export async function POST(request: NextRequest) {
 
         const response = NextResponse.json(
             {
-                message: 'Đăng ký thành công',
+                message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.',
                 user: {
                     id: userId,
                     email,
                     role: 'USER',
+                    emailVerified: false,
                 },
+                requiresVerification: true,
             },
             { status: 201 }
         );
@@ -69,6 +79,28 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('Register error:', error);
+
+        // Handle Firebase Auth errors
+        const authError = error as AuthError;
+        if (authError.code === 'auth/email-already-in-use') {
+            return NextResponse.json(
+                { error: 'Email đã được sử dụng' },
+                { status: 400 }
+            );
+        }
+        if (authError.code === 'auth/invalid-email') {
+            return NextResponse.json(
+                { error: 'Email không hợp lệ' },
+                { status: 400 }
+            );
+        }
+        if (authError.code === 'auth/weak-password') {
+            return NextResponse.json(
+                { error: 'Mật khẩu quá yếu' },
+                { status: 400 }
+            );
+        }
+
         return NextResponse.json(
             { error: 'Có lỗi xảy ra, vui lòng thử lại' },
             { status: 500 }

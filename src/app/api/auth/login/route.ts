@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyPassword, createToken, setAuthCookie } from '@/lib/auth';
-import { COLLECTIONS, getDocByField, User } from '@/lib/db';
+import {
+    signInWithEmailAndPassword,
+    AuthError
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { createToken, setAuthCookie } from '@/lib/auth';
+import { COLLECTIONS, getDocByField, User, updateDocById } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,8 +19,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // HARDCODED ADMIN (Temporary)
-        // Bypass DB check for this specific email/password
+        // HARDCODED ADMIN (Temporary) - Keep for initial setup
         if (email === 'admin@anvitech.vn' && password === 'Admin123@') {
             const token = createToken({
                 userId: 'hardcoded-admin-id',
@@ -29,6 +33,7 @@ export async function POST(request: NextRequest) {
                     id: 'hardcoded-admin-id',
                     email: 'admin@anvitech.vn',
                     role: 'ADMIN',
+                    emailVerified: true,
                 },
             });
 
@@ -36,14 +41,34 @@ export async function POST(request: NextRequest) {
             return response;
         }
 
-        // Find user
-        const user = await getDocByField<User>(COLLECTIONS.USERS, 'email', email);
+        // Sign in with Firebase Auth
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const firebaseUser = userCredential.user;
+
+        // Check email verification
+        if (!firebaseUser.emailVerified) {
+            return NextResponse.json(
+                {
+                    error: 'Email chưa được xác thực. Vui lòng kiểm tra hộp thư của bạn.',
+                    requiresVerification: true,
+                },
+                { status: 403 }
+            );
+        }
+
+        // Get user from Firestore
+        let user = await getDocByField<User>(COLLECTIONS.USERS, 'email', email);
 
         if (!user) {
             return NextResponse.json(
-                { error: 'Email hoặc mật khẩu không đúng' },
+                { error: 'Tài khoản không tồn tại' },
                 { status: 401 }
             );
+        }
+
+        // Update emailVerified status in Firestore if needed
+        if (!user.emailVerified) {
+            await updateDocById(COLLECTIONS.USERS, user.id, { emailVerified: true });
         }
 
         // Check if user is blocked
@@ -51,15 +76,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: 'Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.' },
                 { status: 403 }
-            );
-        }
-
-        // Verify password
-        const isValidPassword = await verifyPassword(password, user.passwordHash);
-        if (!isValidPassword) {
-            return NextResponse.json(
-                { error: 'Email hoặc mật khẩu không đúng' },
-                { status: 401 }
             );
         }
 
@@ -76,6 +92,7 @@ export async function POST(request: NextRequest) {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                emailVerified: true,
             },
         });
 
@@ -84,6 +101,22 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('Login error:', error);
+
+        // Handle Firebase Auth errors
+        const authError = error as AuthError;
+        if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
+            return NextResponse.json(
+                { error: 'Email hoặc mật khẩu không đúng' },
+                { status: 401 }
+            );
+        }
+        if (authError.code === 'auth/too-many-requests') {
+            return NextResponse.json(
+                { error: 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau.' },
+                { status: 429 }
+            );
+        }
+
         return NextResponse.json(
             { error: 'Có lỗi xảy ra, vui lòng thử lại' },
             { status: 500 }
