@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { Card, CardContent, Badge } from '@/components/ui';
+import SeedButton from './SeedButton';
 import {
     COLLECTIONS,
     getAllDocs,
