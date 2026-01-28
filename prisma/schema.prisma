@@ -1,0 +1,232 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USERS - Người dùng
+// ==========================================
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  status       UserStatus @default(ACTIVE)
+  role         UserRole   @default(USER)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  orders      Order[]
+  permissions UserWebappPermission[]
+  licenses    License[]
+  adminLogs   AdminLog[]
+  confirmations PaymentConfirmation[]
+
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// ==========================================
+// WEBAPPS - WebApp viết kịch bản
+// ==========================================
+model Webapp {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  subdomain    String        @unique
+  description  String        @db.Text
+  styleType    String        @map("style_type") // cổ tích, kinh tế, storytelling...
+  demoVideoUrl String?       @map("demo_video_url")
+  price        Decimal       @db.Decimal(12, 0)
+  status       ProductStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  orderItems  OrderItem[]
+  permissions UserWebappPermission[]
+
+  @@map("webapps")
+}
+
+// ==========================================
+// SOFTWARE - Phần mềm phụ trợ (online/offline)
+// ==========================================
+model Software {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  softwareType SoftwareType  @map("software_type")
+  description  String        @db.Text
+  demoVideoUrl String?       @map("demo_video_url")
+  price        Decimal       @db.Decimal(12, 0)
+  status       ProductStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+  licenses   License[]
+
+  @@map("software")
+}
+
+enum SoftwareType {
+  ONLINE
+  OFFLINE
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ==========================================
+// ORDERS - Đơn hàng
+// ==========================================
+model Order {
+  id            String        @id @default(cuid())
+  orderCode     String        @unique @map("order_code")
+  userId        String        @map("user_id")
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(12, 0)
+  paymentMethod PaymentMethod @default(BANK_TRANSFER) @map("payment_method")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user         User                 @relation(fields: [userId], references: [id])
+  orderItems   OrderItem[]
+  confirmation PaymentConfirmation?
+
+  @@map("orders")
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  CANCELLED
+}
+
+// ==========================================
+// ORDER_ITEMS - Chi tiết đơn hàng
+// ==========================================
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String   @map("order_id")
+  itemType  ItemType @map("item_type")
+  itemId    String   @map("item_id")
+  price     Decimal  @db.Decimal(12, 0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  webapp   Webapp?  @relation(fields: [itemId], references: [id], map: "order_items_webapp_fk")
+  software Software? @relation(fields: [itemId], references: [id], map: "order_items_software_fk")
+
+  @@map("order_items")
+}
+
+enum ItemType {
+  WEBAPP
+  SOFTWARE
+}
+
+// ==========================================
+// USER_WEBAPP_PERMISSIONS - Quyền truy cập WebApp
+// ==========================================
+model UserWebappPermission {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  webappId  String           @map("webapp_id")
+  orderId   String           @map("order_id")
+  status    PermissionStatus @default(ACTIVE)
+  grantedAt DateTime         @default(now()) @map("granted_at")
+  expiredAt DateTime?        @map("expired_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  webapp Webapp @relation(fields: [webappId], references: [id])
+
+  @@unique([userId, webappId])
+  @@map("user_webapp_permissions")
+}
+
+enum PermissionStatus {
+  ACTIVE
+  REVOKED
+}
+
+// ==========================================
+// LICENSES - License phần mềm
+// ==========================================
+model License {
+  id          String        @id @default(cuid())
+  licenseKey  String        @unique @map("license_key")
+  userId      String        @map("user_id")
+  softwareId  String        @map("software_id")
+  orderId     String        @map("order_id")
+  status      LicenseStatus @default(ACTIVE)
+  activatedAt DateTime?     @map("activated_at")
+  expiredAt   DateTime?     @map("expired_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id])
+  software Software @relation(fields: [softwareId], references: [id])
+
+  @@map("licenses")
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// ==========================================
+// PAYMENT_CONFIRMATIONS - Xác nhận thanh toán
+// ==========================================
+model PaymentConfirmation {
+  id              String   @id @default(cuid())
+  orderId         String   @unique @map("order_id")
+  adminId         String   @map("admin_id")
+  confirmedAmount Decimal  @map("confirmed_amount") @db.Decimal(12, 0)
+  confirmedAt     DateTime @default(now()) @map("confirmed_at")
+  note            String?  @db.Text
+
+  order Order @relation(fields: [orderId], references: [id])
+  admin User  @relation(fields: [adminId], references: [id])
+
+  @@map("payment_confirmations")
+}
+
+// ==========================================
+// ADMIN_LOGS - Nhật ký quản trị
+// ==========================================
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String   @map("admin_id")
+  action     String   // confirm_payment, grant_access, revoke_license...
+  targetType String   @map("target_type") // order, user, webapp, license
+  targetId   String   @map("target_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@map("admin_logs")
+}

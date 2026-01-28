@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================
+   AnVi Technology Design System
+   Dark Mode Primary Website
+   ================================ */
+
+:root {
+  /* Primary Colors */
+  --color-primary: 59 130 246; /* #3B82F6 */
+  --color-primary-hover: 37 99 235; /* #2563EB */
+  
+  /* Background Colors */
+  --color-bg-primary: 15 23 42; /* #0F172A */
+  --color-bg-secondary: 30 41 59; /* #1E293B */
+  --color-bg-tertiary: 51 65 85; /* #334155 */
+  
+  /* Text Colors */
+  --color-text-primary: 248 250 252; /* #F8FAFC */
+  --color-text-secondary: 148 163 184; /* #94A3B8 */
+  --color-text-muted: 100 116 139; /* #64748B */
+  
+  /* Accent Colors */
+  --color-accent-green: 16 185 129; /* #10B981 */
+  --color-accent-red: 239 68 68; /* #EF4444 */
+  --color-accent-yellow: 245 158 11; /* #F59E0B */
+  
+  /* Border */
+  --color-border: 51 65 85; /* #334155 */
+}
+
+/* Base Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-dark-900 text-dark-50 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold text-dark-50;
+}
+
+h1 { @apply text-3xl md:text-4xl lg:text-5xl; }
+h2 { @apply text-2xl md:text-3xl lg:text-4xl; }
+h3 { @apply text-xl md:text-2xl; }
+h4 { @apply text-lg md:text-xl; }
+
+p {
+  @apply text-dark-300 leading-relaxed;
+}
+
+/* Links */
+a {
+  @apply text-primary-400 hover:text-primary-300 transition-colors;
+}
+
+/* ================================
+   Component Utilities
+   ================================ */
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center px-6 py-3 font-medium rounded-lg transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-dark-700 text-dark-100 border border-dark-600 hover:bg-dark-600 hover:border-dark-500;
+  }
+  
+  .btn-ghost {
+    @apply btn bg-transparent text-dark-300 hover:bg-dark-800 hover:text-dark-100;
+  }
+  
+  .btn-accent {
+    @apply btn bg-accent-green text-white hover:bg-emerald-600;
+  }
+  
+  /* Cards */
+  .card {
+    @apply bg-dark-800 border border-dark-700 rounded-xl p-6;
+  }
+  
+  .card-hover {
+    @apply card hover:border-dark-600 hover:bg-dark-750 transition-all duration-200;
+  }
+  
+  /* Inputs */
+  .input {
+    @apply w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-lg text-dark-100 
+           placeholder:text-dark-500 focus:outline-none focus:ring-2 focus:ring-primary-500 
+           focus:border-transparent transition-all duration-200;
+  }
+  
+  .input-error {
+    @apply input border-accent-red focus:ring-accent-red;
+  }
+  
+  /* Labels */
+  .label {
+    @apply block text-sm font-medium text-dark-300 mb-2;
+  }
+  
+  /* Sections */
+  .section {
+    @apply py-16 md:py-24;
+  }
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-primary {
+    @apply badge bg-primary-500/20 text-primary-400;
+  }
+  
+  .badge-green {
+    @apply badge bg-accent-green/20 text-accent-green;
+  }
+  
+  .badge-red {
+    @apply badge bg-accent-red/20 text-accent-red;
+  }
+  
+  .badge-yellow {
+    @apply badge bg-accent-yellow/20 text-accent-yellow;
+  }
+  
+  /* Tables */
+  .table-container {
+    @apply overflow-x-auto rounded-lg border border-dark-700;
+  }
+  
+  .table {
+    @apply w-full text-left;
+  }
+  
+  .table th {
+    @apply px-6 py-4 bg-dark-800 text-dark-300 text-sm font-medium uppercase tracking-wider;
+  }
+  
+  .table td {
+    @apply px-6 py-4 text-dark-200 border-t border-dark-700;
+  }
+  
+  .table tr:hover td {
+    @apply bg-dark-800/50;
+  }
+}
+
+/* ================================
+   Animations
+   ================================ */
+
+@layer utilities {
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 3s ease infinite;
+  }
+  
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* Glass effect */
+  .glass {
+    @apply bg-dark-800/80 backdrop-blur-lg border border-dark-700/50;
+  }
+  
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  .glow-green {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* ================================
+   Scrollbar Styles
+   ================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-dark-500;
+}
+
+/* ================================
+   Selection
+   ================================ */
+
+::selection {
+  @apply bg-primary-500/30 text-white;
+}
