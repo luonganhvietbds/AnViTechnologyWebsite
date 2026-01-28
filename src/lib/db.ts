@@ -30,6 +30,7 @@ export const COLLECTIONS = {
     LICENSES: 'licenses',
     PAYMENT_CONFIRMATIONS: 'payment_confirmations',
     ADMIN_LOGS: 'admin_logs',
+    CONFIG: 'system_config',
 } as const;
 
 // Type definitions matching our schema
@@ -138,7 +139,7 @@ export async function getDocById<T extends DocumentData>(
     const docRef = doc(db, collectionName, docId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as T;
+        return { id: docSnap.id, ...docSnap.data() } as unknown as T;
     }
     return null;
 }
@@ -151,8 +152,8 @@ export async function getDocByField<T extends DocumentData>(
     const q = query(collection(db, collectionName), where(fieldName, '==', value));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as T;
+        const docItem = querySnapshot.docs[0];
+        return { id: docItem.id, ...docItem.data() } as unknown as T;
     }
     return null;
 }
@@ -163,7 +164,7 @@ export async function getAllDocs<T extends DocumentData>(
 ): Promise<T[]> {
     const q = query(collection(db, collectionName), ...constraints);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+    return querySnapshot.docs.map(docItem => ({ id: docItem.id, ...docItem.data() } as unknown as T));
 }
 
 export async function createDoc<T extends DocumentData>(

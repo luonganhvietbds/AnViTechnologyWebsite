@@ -16,7 +16,7 @@ export default async function AdminConfigPage() {
     }
 
     // Get all config from Firestore
-    const configs = await getAllDocs<SystemConfig>(COLLECTIONS.CONFIG || 'system_config');
+    const configs = await getAllDocs<SystemConfig>(COLLECTIONS.CONFIG);
 
     // Group configs by category
     const configByCategory = configs.reduce((acc, config) => {
