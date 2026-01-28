@@ -38,6 +38,8 @@ export interface User {
     id: string;
     email: string;
     passwordHash: string;
+    firebaseUid?: string;
+    emailVerified?: boolean;
     status: 'ACTIVE' | 'BLOCKED';
     role: 'USER' | 'ADMIN';
     createdAt: Timestamp;
