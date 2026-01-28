@@ -78,8 +78,9 @@ export function getAuthCookieOptions() {
         sameSite: 'lax' as const,
         path: '/',
         maxAge: 60 * 60 * 24 * 7, // 7 days
-        // In production, set domain for SSO
-        ...(isProduction && { domain: '.anvitech.vn' }),
+        // Set domain from environment variable (critical for Vercel preview vs Production)
+        // If COOKIE_DOMAIN is not set, it defaults to current domain (safest for login)
+        ...(process.env.COOKIE_DOMAIN && { domain: process.env.COOKIE_DOMAIN }),
     };
 }
 
